@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gym Buddy</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white min-h-screen">
+    <div id="app"></div>
+
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        const Barbell = ({ className = "w-6 h-6" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <rect x="2" y="10" width="2" height="4" strokeWidth={2} rx="0.5"/>
+                <rect x="20" y="10" width="2" height="4" strokeWidth={2} rx="0.5"/>
+                <line x1="4" y1="12" x2="8" y2="12" strokeWidth={2}/>
+                <line x1="16" y1="12" x2="20" y2="12" strokeWidth={2}/>
+                <rect x="8" y="9" width="2" height="6" strokeWidth={2} rx="0.5"/>
+                <rect x="14" y="9" width="2" height="6" strokeWidth={2} rx="0.5"/>
+                <line x1="10" y1="12" x2="14" y2="12" strokeWidth={2.5}/>
+            </svg>
+        );
+
+        const Plus = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+        );
+
+        const Trash2 = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+        );
+
+        const TrendingUp = ({ className = "w-5 h-5" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+            </svg>
+        );
+
+        const Upload = ({ className = "w-4 h-4" }) => (
+            <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+        );
+
+        const GymTracker = () => {
+            const exercises = {
+                'Spate': ['Lat pulldown', 'Cable row', 'Diag pulldown', 'Face pulls', 'Hyper extention'],
+                'Piept': ['Bench', 'Chest incline press', 'Chest decline press', 'Chest flies', 'Chest downpush'],
+                'Upper body': ['Shoulder press', 'Shoulder lat extension', 'Bar curl', 'Biceps curl', 'Preacher curl', 
+                            'Dips', 'Weight assist dips', 'Cable extension', 'Rope extension'],
+                'Picioare': ['Squats', 'Leg extension', 'Leg Curls', 'Calf press']
+            };
+
+            const [workout, setWorkout] = useState({
+                category: 'Spate',
+                date: new Date().toISOString().split('T')[0],
+                exercises: []
+            });
+
+            const [currentExercises, setCurrentExercises] = useState([
+                { name: exercises['Spate'][0], sets: [{ reps: '', weight: '' }] }
+            ]);
+
+            const [savedWorkouts, setSavedWorkouts] = useState([]);
+            const [showHistory, setShowHistory] = useState(false);
+            const [sheetsUrl, setSheetsUrl] = useState('');
+            const [showUrlInput, setShowUrlInput] = useState(false);
+
+            useEffect(() => {
+                const saved = localStorage.getItem('gymWorkouts');
+                if (saved) {
+                    setSavedWorkouts(JSON.parse(saved));
+                }
+                const url = localStorage.getItem('sheetsUrl');
+                if (url) {
+                    setSheetsUrl(url);
+                }
+            }, []);
+
+            const addSet = (exerciseIndex) => {
+                const newExercises = [...currentExercises];
+                newExercises[exerciseIndex].sets.push({ reps: '', weight: '' });
+                setCurrentExercises(newExercises);
+            };
+
+            const updateSet = (exerciseIndex, setIndex, field, value) => {
+                const newExercises = [...currentExercises];
+                newExercises[exerciseIndex].sets[setIndex][field] = value;
+                setCurrentExercises(newExercises);
+            };
+
+            const removeSet = (exerciseIndex, setIndex) => {
+                const newExercises = [...currentExercises];
+                newExercises[exerciseIndex].sets = newExercises[exerciseIndex].sets.filter((_, i) => i !== setIndex);
+                setCurrentExercises(newExercises);
+            };
+
+            const updateExerciseName = (exerciseIndex, name) => {
+                const newExercises = [...currentExercises];
+                newExercises[exerciseIndex].name = name;
+                setCurrentExercises(newExercises);
+            };
+
+            const addExercise = () => {
+                setCurrentExercises([
+                    ...currentExercises,
+                    { name: exercises[workout.category][0], sets: [{ reps: '', weight: '' }] }
+                ]);
+            };
+
+            const removeExercise = (exerciseIndex) => {
+                setCurrentExercises(currentExercises.filter((_, i) => i !== exerciseIndex));
+            };
+
+            const saveWorkout = () => {
+                const validExercises = currentExercises
+                    .map(ex => ({
+                        ...ex,
+                        sets: ex.sets.filter(s => s.reps && s.weight)
+                    }))
+                    .filter(ex => ex.sets.length > 0);
+
+                if (validExercises.length === 0) {
+                    alert('Please add at least one exercise with complete sets');
+                    return;
+                }
+
+                const newWorkout = { ...workout, exercises: validExercises, savedAt: new Date().toISOString() };
+                const newWorkouts = [...savedWorkouts, newWorkout];
+                setSavedWorkouts(newWorkouts);
+                localStorage.setItem('gymWorkouts', JSON.stringify(newWorkouts));
+
+                setCurrentExercises([{ name: exercises[workout.category][0], sets: [{ reps: '', weight: '' }] }]);
+
+                alert('Workout saved!');
+            };
+
+            const generateCSV = () => {
+                let csv = '';
+                savedWorkouts.forEach(w => {
+                    w.exercises.forEach(ex => {
+                        ex.sets.forEach((set, idx) => {
+                            const volume = parseInt(set.reps) * parseFloat(set.weight);
+                            const week = w.date;
+                            csv += `${w.date}\t${ex.name}\t${idx + 1}\t${set.reps}\t${set.weight}\t${w.category}\t${volume}\t${week}\n`;
+                        });
+                    });
+                });
+                return csv;
+            };
+
+            const copyToClipboard = () => {
+                const csv = generateCSV();
+                navigator.clipboard.writeText(csv);
+                alert('Data copied! Paste it into your Google Sheet.');
+            };
+
+            const submitToSheets = async () => {
+                if (!sheetsUrl) {
+                    setShowUrlInput(true);
+                    alert('Please set your Google Sheets Web App URL first');
+                    return;
+                }
+
+                const csv = generateCSV();
+                try {
+                    const response = await fetch(sheetsUrl, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {
+                            'Content-Type': 'text/plain',
+                        },
+                        body: csv
+                    });
+                    alert('Data submitted to Google Sheets!');
+                } catch (error) {
+                    alert('Error submitting data. You can still copy/paste manually.');
+                }
+            };
+
+            const saveSheetsUrl = () => {
+                localStorage.setItem('sheetsUrl', sheetsUrl);
+                setShowUrlInput(false);
+                alert('Google Sheets URL saved!');
+            };
+
+            const clearHistory = () => {
+                if (confirm('Clear all saved workouts?')) {
+                    setSavedWorkouts([]);
+                    localStorage.removeItem('gymWorkouts');
+                }
+            };
+
+            const totalVolume = currentExercises.reduce((sum, ex) => {
+                return sum + ex.sets.reduce((s, set) => {
+                    return s + (parseInt(set.reps || 0) * parseFloat(set.weight || 0));
+                }, 0);
+            }, 0);
+
+            return (
+                <div className="min-h-screen p-4">
+                    <div className="max-w-2xl mx-auto">
+                        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-4 border border-white/20">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-3xl">😊</span>
+                                    <h1 className="text-2xl font-bold">Gym Buddy</h1>
+                                </div>
+                                <button
+                                    onClick={() => setShowHistory(!showHistory)}
+                                    className="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition"
+                                >
+                                    {showHistory ? 'Track' : 'History'}
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm text-purple-300 mb-2">Workout Type</label>
+                                    <select
+                                        value={workout.category}
+                                        onChange={(e) => {
+                                            const cat = e.target.value;
+                                            setWorkout({ ...workout, category: cat });
+                                            setCurrentExercises([{ name: exercises[cat][0], sets: [{ reps: '', weight: '' }] }]);
+                                        }}
+                                        className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white"
+                                    >
+                                        {Object.keys(exercises).map(cat => (
+                                            <option key={cat} value={cat}>{cat}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-sm text-purple-300 mb-2">Date</label>
+                                    <input
+                                        type="date"
+                                        value={workout.date}
+                                        onChange={(e) => setWorkout({ ...workout, date: e.target.value })}
+                                        className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white"
+                                    />
+                                </div>
+                            </div>
+
+                            {totalVolume > 0 && (
+                                <div className="mt-4 flex items-center gap-2 text-purple-300">
+                                    <TrendingUp className="w-5 h-5" />
+                                    <span className="font-semibold">Total Volume: {totalVolume.toFixed(0)} kg</span>
+                                </div>
+                            )}
+                        </div>
+
+                        {!showHistory ? (
+                            <>
+                                {currentExercises.map((exercise, exerciseIndex) => (
+                                    <div key={exerciseIndex} className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 mb-4 border border-white/20">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <label className="block text-sm text-purple-300">Exercise {exerciseIndex + 1}</label>
+                                            {currentExercises.length > 1 && (
+                                                <button
+                                                    onClick={() => removeExercise(exerciseIndex)}
+                                                    className="text-red-400 hover:text-red-300"
+                                                >
+                                                    <Trash2 className="w-5 h-5" />
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <select
+                                            value={exercise.name}
+                                            onChange={(e) => updateExerciseName(exerciseIndex, e.target.value)}
+                                            className="w-full mb-4 bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white"
+                                        >
+                                            {exercises[workout.category].map(ex => (
+                                                <option key={ex} value={ex}>{ex}</option>
+                                            ))}
+                                        </select>
+
+                                        <div className="space-y-3 mb-4">
+                                            {exercise.sets.map((set, setIndex) => (
+                                                <div key={setIndex} className="flex gap-2 items-center">
+                                                    <span className="text-purple-300 font-semibold w-8">{setIndex + 1}</span>
+                                                    <select
+                                                        value={set.reps}
+                                                        onChange={(e) => updateSet(exerciseIndex, setIndex, 'reps', e.target.value)}
+                                                        className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white"
+                                                    >
+                                                        <option value="">Reps</option>
+                                                        {[...Array(40)].map((_, i) => (
+                                                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                                                        ))}
+                                                    </select>
+                                                    <input
+                                                        type="number"
+                                                        placeholder="Weight (kg)"
+                                                        value={set.weight}
+                                                        onChange={(e) => {
+                                                            const val = parseFloat(e.target.value);
+                                                            if (e.target.value === '' || val >= 0) {
+                                                                updateSet(exerciseIndex, setIndex, 'weight', e.target.value);
+                                                            }
+                                                        }}
+                                                        min="0"
+                                                        step="0.5"
+                                                        className="flex-1 bg-white/20 border border-white/30 rounded-lg px-4 py-3 text-white placeholder-white/50"
+                                                    />
+                                                    {exercise.sets.length > 1 && (
+                                                        <button
+                                                            onClick={() => removeSet(exerciseIndex, setIndex)}
+                                                            className="p-2 bg-red-500/20 hover:bg-red-500/30 rounded-lg transition"
+                                                        >
+                                                            <Trash2 className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <button
+                                            onClick={() => addSet(exerciseIndex)}
+                                            className="w-full py-3 bg-white/10 hover:bg-white/20 rounded-lg transition flex items-center justify-center gap-2 border border-white/30"
+                                        >
+                                            <Plus className="w-5 h-5" />
+                                            Add Set
+                                        </button>
+                                    </div>
+                                ))}
+
+                                <button
+                                    onClick={addExercise}
+                                    className="w-full mb-4 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg transition font-semibold flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-5 h-5" />
+                                    Add Exercise
+                                </button>
+
+                                <button
+                                    onClick={saveWorkout}
+                                    className="w-full py-4 bg-green-600 hover:bg-green-700 rounded-lg transition font-bold text-lg flex items-center justify-center gap-2"
+                                >
+                                    <Barbell className="w-6 h-6" />
+                                    Submit Workout
+                                </button>
+                            </>
+                        ) : (
+                            <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20">
+                                <div className="flex justify-between items-center mb-4">
+                                    <h2 className="text-xl font-bold">Saved Workouts ({savedWorkouts.length})</h2>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setShowUrlInput(!showUrlInput)}
+                                            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm"
+                                        >
+                                            Setup
+                                        </button>
+                                        <button
+                                            onClick={submitToSheets}
+                                            className="px-4 py-2 bg-green-600 hover:bg-green-700 rounded-lg transition text-sm flex items-center gap-2"
+                                        >
+                                            <Upload className="w-4 h-4" />
+                                            Submit
+                                        </button>
+                                        <button
+                                            onClick={copyToClipboard}
+                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition text-sm"
+                                        >
+                                            Copy
+                                        </button>
+                                        <button
+                                            onClick={clearHistory}
+                                            className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition text-sm"
+                                        >
+                                            Clear
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {showUrlInput && (
+                                    <div className="mb-4 p-4 bg-white/5 rounded-lg">
+                                        <label className="block text-sm text-purple-300 mb-2">Google Sheets Web App URL</label>
+                                        <input
+                                            type="text"
+                                            value={sheetsUrl}
+                                            onChange={(e) => setSheetsUrl(e.target.value)}
+                                            placeholder="https://script.google.com/macros/s/..."
+                                            className="w-full bg-white/20 border border-white/30 rounded-lg px-4 py-2 text-white placeholder-white/50 mb-2"
+                                        />
+                                        <button
+                                            onClick={saveSheetsUrl}
+                                            className="w-full py-2 bg-green-600 hover:bg-green-700 rounded-lg transition"
+                                        >
+                                            Save URL
+                                        </button>
+                                    </div>
+                                )}
+                                
+                                <div className="space-y-3 max-h-96 overflow-y-auto">
+                                    {savedWorkouts.map((w, idx) => (
+                                        <div key={idx} className="bg-white/5 rounded-lg p-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="font-semibold text-purple-300">{w.category}</span>
+                                                <span className="text-sm text-white/60">{w.date}</span>
+                                            </div>
+                                            <div className="text-sm text-white/70">
+                                                {w.exercises.map(ex => ex.name).join(', ')}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {savedWorkouts.length === 0 && (
+                                    <p className="text-center text-white/50 py-8">No saved workouts yet</p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<GymTracker />, document.getElementById('app'));
+    </script>
+</body>
+</html>
